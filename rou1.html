@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>🎴 Tirage de Prénom</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e1e2f, #3c3b5a, #1e1e2f);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      color: white;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 40px;
+      text-shadow: 1px 1px 4px #000;
+      z-index: 1;
+    }
+
+    .carte {
+      width: 220px;
+      height: 110px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-size: 28px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.4s ease;
+      z-index: 1;
+    }
+
+    .carte.glow {
+      animation: glow 0.6s ease-in-out 1;
+    }
+
+    @keyframes glow {
+      0%   { box-shadow: 0 0 10px #a0d0ff; }
+      50%  { box-shadow: 0 0 30px #80c0ff; }
+      100% { box-shadow: 0 0 10px #a0d0ff; }
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 14px 30px;
+      font-size: 17px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #00adb5, #007b7f);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 1;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    button:disabled {
+      background: #007b7f;
+      cursor: wait;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎴 Prénom Mystère</h1>
+  <div class="carte" id="carte">❓</div>
+  <button id="tirerBtn">🔮 Tirer un prénom</button>
+
+  <!-- 💥 Audio de bombe -->
+  <audio id="explosionSound" src="https://www.soundjay.com/explosion/sounds/explosion-01.mp3" preload="auto"></audio>
+
+  <!-- 🎆 Canvas pour les feux d’artifice -->
+  <canvas id="fireworks"></canvas>
+
+  <script>
+    const prenoms = {
+      "Ismael": 20, "Lavrin": 40, "Sean": 40, "Lou": 40, "Sarah": 40,
+      "Mohamed": 15, "Tom": 45, "Younes": 15, "Lina": 30, "Mathis": 35,
+      "Leo": 20, "Mathias": 15, "Idriss": 40, "Amir": 15, "Yoann": 15,
+      "Ewan": 15, "Sakina": 40, "Sairam": 30, "Steven": 15, "Ruben": 30,
+      "Guillaume": 15, "Dorian": 40, "Corentin": 30
+    };
+
+    const carte = document.getElementById("carte");
+    const bouton = document.getElementById("tirerBtn");
+    const explosion = document.getElementById("explosionSound");
+    let dernierPrenom = "";
+
+    function choisirPrenom() {
+      const pool = [];
+      for (const [prenom, poids] of Object.entries(prenoms)) {
+        for (let i = 0; i < poids; i++) pool.push(prenom);
+      }
+      let prenomTire;
+      do {
+        prenomTire = pool[Math.floor(Math.random() * pool.length)];
+      } while (prenomTire === dernierPrenom);
+      dernierPrenom = prenomTire;
+      return prenomTire;
+    }
+
+    bouton.addEventListener("click", () => {
+      bouton.disabled = true;
+      carte.textContent = "";
+      carte.style.transform = "scaleX(0)";
+      setTimeout(() => {
+        const prenom = choisirPrenom();
+        carte.textContent = prenom;
+        carte.classList.add("glow");
+        carte.style.transform = "scaleX(1)";
+        explosion.currentTime = 0;
+        explosion.play(); // 💣 explosion audio
+        launchFireworks(); // 🎆 feux d’artifice
+        setTimeout(() => {
+          carte.classList.remove("glow");
+          bouton.disabled = false;
+        }, 800);
+      }, 300);
+    });
+
+    // 🎇 Feux d’artifice avec Canvas
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function launchFireworks() {
+      let particles = [];
+      const colors = ["#ff4b5c", "#56cfe1", "#f6bd60", "#d0f4de", "#ffc8dd"];
+
+      for (let i = 0; i < 40; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          radius: Math.random() * 3 + 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          angle: Math.random() * 2 * Math.PI,
+          speed: Math.random() * 6 + 2,
+          alpha: 1
+        });
+      }
+
+      const interval = setInterval(() => {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach(p => {
+          p.x += Math.cos(p.angle) * p.speed;
+          p.y += Math.sin(p.angle) * p.speed;
+          p.alpha -= 0.02;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+          ctx.fillStyle = `rgba(${hexToRgb(p.color)}, ${p.alpha})`;
+          ctx.fill();
+        });
+
+        particles = particles.filter(p => p.alpha > 0);
+        if (particles.length === 0) clearInterval(interval);
+      }, 30);
+    }
+
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r},${g},${b}`;
+    }
+    function launchEmojis() {
+  const emojis = ["🎉", "🎊", "💥", "🔥", "💫", "🤩", "🎈"];
+  for (let i = 0; i < 20; i++) {
+    const emoji = document.createElement("div");
+    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    emoji.style.position = "absolute";
+    emoji.style.left = `${Math.random() * window.innerWidth}px`;
+    emoji.style.top = `${window.innerHeight}px`;
+    emoji.style.fontSize = `${24 + Math.random() * 20}px`;
+    emoji.style.animation = `flyUp ${2 + Math.random()}s ease-out forwards`;
+    emoji.style.pointerEvents = "none";
+    emoji.style.zIndex = "2";
+    document.body.appendChild(emoji);
+
+    setTimeout(() => {
+      emoji.remove();
+    }, 4000);
+  }
+}
+
+  </script>
+
+</body>
+</html>
