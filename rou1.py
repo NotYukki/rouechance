@@ -9,24 +9,71 @@ prenoms = {
     "Guillaume": 15, "Dorian": 25, "Corentin": 20
 }
 
-t = []
-for prenom, pourcentage in prenoms.items():
-    t += [prenom] * pourcentage
+def choisir_prenom():
+    noms = list(prenoms.keys())
+    poids = list(prenoms.values())
+    return random.choices(noms, weights=poids, k=1)[0]
 
-random.shuffle(t)
+def retourner_carte():
+    bouton.config(state="disabled", text="✨ Tirage...")
+    carte_label.config(text="", fg="white")
+    animer_rotation(1.0, shrink=True)
 
-def afficher_prenom():
-    prenom = random.choice(t) 
-    label.config(text=f"Le prénom choisi est : {prenom}")
+def animer_rotation(scale, shrink):
+    if shrink and scale > 0:
+        carte.scale("all", 0, 0, 0.9, 1.0)  # simulation de zoom X
+        carte.update()
+        root.after(20, animer_rotation, scale - 0.1, True)
+    elif shrink:
+        prenom = choisir_prenom()
+        carte_label.config(text=prenom, fg="#1a1a1a")
+        carte.config(bg="#f0f8ff")
+        glow()
+        animer_rotation(0.1, False)
+    elif not shrink and scale < 1:
+        carte.scale("all", 0, 0, 1.1, 1.0)
+        carte.update()
+        root.after(20, animer_rotation, scale + 0.1, False)
+    else:
+        bouton.config(state="normal", text="🔁 Tirer un prénom")
+
+def glow(step=0):
+    # animation légère de glow
+    couleurs = ["#f0f8ff", "#e0f0ff", "#d0ecff", "#e0f0ff", "#f0f8ff"]
+    if step < len(couleurs):
+        carte.config(bg=couleurs[step])
+        root.after(60, glow, step + 1)
+
+# --- GUI SETUP ---
 
 root = tk.Tk()
-root.title("Choix de Prénom")
+root.title("✨ Tirage Stylé de Prénom")
+root.geometry("420x320")
+root.configure(bg="#1e1e2f")
 
-button = tk.Button(root, text="Choisir un prénom", command=afficher_prenom, font=("Arial", 14))
-button.pack(pady=20)
+titre = tk.Label(root, text="🎴 Prénom Mystère", font=("Helvetica", 24, "bold"), bg="#1e1e2f", fg="white")
+titre.pack(pady=20)
 
-label = tk.Label(root, text="", font=("Arial", 16))
-label.pack(pady=20)
+# Carte visuelle
+carte = tk.Canvas(root, width=200, height=100, bg="white", highlightthickness=0)
+carte.pack(pady=20)
+
+carte_label = tk.Label(root, text="❓", font=("Helvetica", 28, "bold"), bg="white", fg="#333")
+carte.create_window(100, 50, window=carte_label)
+
+# Bouton principal
+bouton = tk.Button(
+    root,
+    text="🔮 Tirer un prénom",
+    command=retourner_carte,
+    font=("Helvetica", 14, "bold"),
+    bg="#00adb5",
+    fg="white",
+    activebackground="#007b7f",
+    relief="flat",
+    padx=20,
+    pady=10
+)
+bouton.pack(pady=10)
 
 root.mainloop()
-
