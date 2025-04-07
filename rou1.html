@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>🎴 Tirage de Prénom</title>
+  <title>🎴 Rueda magica</title>
   <style>
     body {
       margin: 0;
@@ -13,7 +13,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #1e1e2f, #3c3b5a, #1e1e2f);
+      background: linear-gradient(-45deg, #ff6ec4, #7873f5, #42e695, #f4f4f4);
       background-size: 400% 400%;
       animation: gradient 15s ease infinite;
       color: white;
@@ -47,16 +47,16 @@
       justify-content: center;
       transition: transform 0.4s ease;
       z-index: 1;
+      transform-style: preserve-3d;
     }
 
-    .carte.glow {
-      animation: glow 0.6s ease-in-out 1;
+    .animate {
+      animation: spin 1.8s ease-in-out;
     }
 
-    @keyframes glow {
-      0%   { box-shadow: 0 0 10px #a0d0ff; }
-      50%  { box-shadow: 0 0 30px #80c0ff; }
-      100% { box-shadow: 0 0 10px #a0d0ff; }
+    @keyframes spin {
+      0% { transform: rotateY(0); }
+      100% { transform: rotateY(1080deg); }
     }
 
     button {
@@ -95,34 +95,64 @@
 </head>
 <body>
 
-  <h1>🎴 Prénom Mystère</h1>
+  <h1>🎴 Mysterio ^^</h1>
   <div class="carte" id="carte">❓</div>
-  <button id="tirerBtn">🔮 Tirer un prénom</button>
+  <button id="tirerBtn">🔮 Tirer un nom</button>
+  <button id="supprimerBtn" disabled>🗑️ Supprimer ce prénom</button>
 
+  <audio id="explosionSound" src="https://www.soundjay.com/explosion/sounds/explosion-01.mp3" preload="auto"></audio>
+  <audio id="sonAleatoire" preload="auto"></audio>
   <canvas id="fireworks"></canvas>
 
   <script>
     const prenoms = {
-      "Ismael": 20, "Lavrin": 40, "Sean": 40, "Lou": 40, "Sarah": 40,
-      "Mohamed": 15, "Tom": 45, "Younes": 15, "Lina": 30, "Mathis": 35,
-      "Leo": 20, "Mathias": 15, "Idriss": 40, "Amir": 15, "Yoann": 15,
-      "Ewan": 15, "Sakina": 40, "Sairam": 30, "Steven": 15, "Ruben": 30,
-      "Guillaume": 15, "Dorian": 40, "Corentin": 30
+      "Ismael": 20, "Lavrin": 15, "Sean": 50, "Lou": 50, "Sarah": 50,
+      "Mohamed": 15, "Tom": 55, "Younes": 25, "Lina": 40, "Mathis": 20,
+      "Leo": 20, "Mathias": 15, "Idriss": 55, "Amir": 15, "Yoann": 15,
+      "Ewan": 15, "Sakina": 50, "Sairam": 40, "Steven": 15, "Ruben": 40,
+      "Guillaume": 50, "Dorian": 55, "Corentin": 40
     };
 
+    let pool = genererPool();
+    let dernierPrenom = "";
     const carte = document.getElementById("carte");
     const bouton = document.getElementById("tirerBtn");
-    let dernierPrenom = "";
+    const explosion = document.getElementById("explosionSound");
+    const sonAleatoire = document.getElementById("sonAleatoire");
+    const boutonSupprimer = document.getElementById("supprimerBtn");
+
+    // Fichiers audio disponibles
+    const sons = [
+      "22164.mp3",
+      "1841.mp3",
+      "72.mp3",
+      "intro-gotaga-&-musique-originale-[hd].mp3",
+      "Cash Cup Blastorme Voix Off By Aymeric.mp3",
+      "neuille-alarme-incendie-talmo.mp3",
+      "sonnerie-totally-spies.mp3"
+    ];
+
+    function genererPool() {
+      const nouveauPool = [];
+      for (const [prenom, poids] of Object.entries(prenoms)) {
+        for (let i = 0; i < poids; i++) nouveauPool.push(prenom);
+      }
+      return nouveauPool;
+    }
 
     function choisirPrenom() {
-      const pool = [];
-      for (const [prenom, poids] of Object.entries(prenoms)) {
-        for (let i = 0; i < poids; i++) pool.push(prenom);
+      if (pool.length === 0) {
+        carte.textContent = "🎉 Tous les noms tirés !";
+        bouton.disabled = true;
+        return null;
       }
-      let prenomTire;
+      let index, prenomTire;
       do {
-        prenomTire = pool[Math.floor(Math.random() * pool.length)];
-      } while (prenomTire === dernierPrenom);
+        index = Math.floor(Math.random() * pool.length);
+        prenomTire = pool[index];
+      } while (prenomTire === dernierPrenom && pool.length > 1);
+
+      pool = pool.filter(p => p !== prenomTire);
       dernierPrenom = prenomTire;
       return prenomTire;
     }
@@ -130,21 +160,31 @@
     bouton.addEventListener("click", () => {
       bouton.disabled = true;
       carte.textContent = "";
-      carte.style.transform = "scaleX(0)";
+      carte.classList.remove("animate");
+      void carte.offsetWidth;
+      carte.classList.add("animate");
+
+      // 🔊 Choisir un son aléatoire
+      const son = sons[Math.floor(Math.random() * sons.length)];
+      sonAleatoire.src = son;
+      sonAleatoire.play();
+
+      const prenom = choisirPrenom();
+
       setTimeout(() => {
-        const prenom = choisirPrenom();
-        carte.textContent = prenom;
-        carte.classList.add("glow");
-        carte.style.transform = "scaleX(1)";
-        launchFireworks();
-        setTimeout(() => {
-          carte.classList.remove("glow");
-          bouton.disabled = false;
-        }, 800);
-      }, 300);
+        if (prenom) {
+          carte.textContent = prenom;
+          explosion.currentTime = 0;
+          explosion.play();
+          launchFireworks();
+          launchConfetti();
+          boutonSupprimer.disabled = false; // Activer le bouton de suppression
+        }
+        bouton.disabled = false;
+      }, 1800);
     });
 
-    // 🎇 Feux d’artifice avec Canvas
+    // 🎆 Feux d’artifice
     const canvas = document.getElementById('fireworks');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -153,7 +193,6 @@
     function launchFireworks() {
       let particles = [];
       const colors = ["#ff4b5c", "#56cfe1", "#f6bd60", "#d0f4de", "#ffc8dd"];
-
       for (let i = 0; i < 40; i++) {
         particles.push({
           x: canvas.width / 2,
@@ -169,7 +208,6 @@
       const interval = setInterval(() => {
         ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         particles.forEach(p => {
           p.x += Math.cos(p.angle) * p.speed;
           p.y += Math.sin(p.angle) * p.speed;
@@ -179,7 +217,6 @@
           ctx.fillStyle = `rgba(${hexToRgb(p.color)}, ${p.alpha})`;
           ctx.fill();
         });
-
         particles = particles.filter(p => p.alpha > 0);
         if (particles.length === 0) clearInterval(interval);
       }, 30);
@@ -192,7 +229,44 @@
       const b = bigint & 255;
       return `${r},${g},${b}`;
     }
-  </script>
 
+    // 🎉 Confettis emojis
+    function launchConfetti() {
+      const emojis = ["🎉", "🎊", "💥", "🔥", "💫"];
+      for (let i = 0; i < 20; i++) {
+        const emoji = document.createElement("div");
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.position = "absolute";
+        emoji.style.left = `${Math.random() * window.innerWidth}px`;
+        emoji.style.top = `${window.innerHeight}px`;
+        emoji.style.fontSize = `${24 + Math.random() * 20}px`;
+        emoji.style.animation = `flyUp ${2 + Math.random()}s ease-out forwards`;
+        emoji.style.pointerEvents = "none";
+        emoji.style.zIndex = "2";
+        document.body.appendChild(emoji);
+
+        setTimeout(() => emoji.remove(), 4000);
+      }
+    }
+
+    const style = document.createElement("style");
+    style.innerHTML = `
+      @keyframes flyUp {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-600px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Fonction pour supprimer un prénom
+    boutonSupprimer.addEventListener("click", () => {
+      if (dernierPrenom && prenoms.hasOwnProperty(dernierPrenom)) {
+        delete prenoms[dernierPrenom]; // Supprimer du dictionnaire
+        pool = genererPool(); // Régénérer le pool
+        boutonSupprimer.disabled = true;
+        alert(`❌ ${dernierPrenom} a été supprimé !`);
+      }
+    });
+  </script>
 </body>
 </html>
